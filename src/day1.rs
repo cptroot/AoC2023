@@ -2,7 +2,6 @@ use aoc_runner_derive::aoc_generator;
 use aoc_runner_derive::aoc;
 
 use anyhow::Result;
-use anyhow::anyhow;
 
 use regex::Regex;
 
