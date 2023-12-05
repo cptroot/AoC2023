@@ -342,8 +342,9 @@ fn find_mapped_ranges(data: &Data, start_type: &ItemType, end_type: &ItemType, r
     current_ranges
 }
 
+#[cfg(disable)]
 #[aoc(day5, part2, memory_hog)]
-fn solve_part2_slow(input: &Data) -> usize {
+fn solve_part2_memory_intensive(input: &Data) -> usize {
     let ranges: Vec<_> = input.seeds
         .chunks(2)
         .map(|arr| RangeType { start: arr[0].0, length: arr[1].0 })
@@ -352,19 +353,19 @@ fn solve_part2_slow(input: &Data) -> usize {
     let start_type = &input.starting_type;
     let end_type = &ItemType("location".to_owned());
 
-    let final_values = find_mapped_brute_force(input, start_type, end_type, ranges);
-
-    final_values.into_iter().map(|i| i.0).min().unwrap()
+    ranges.iter().map(|range| {
+        let final_values = find_mapped_large_memory(input, start_type, end_type, range);
+        final_values.into_iter().map(|i| i.0).min().unwrap()
+    }).min().unwrap()
 }
 
-fn find_mapped_brute_force(data: &Data, start_type: &ItemType, end_type: &ItemType, ranges: Vec<RangeType>) -> Vec<Item> {
+#[cfg(disable)]
+fn find_mapped_large_memory(data: &Data, start_type: &ItemType, end_type: &ItemType, range: &RangeType) -> Vec<Item> {
     let mut current_type = start_type;
     let mut current_values = vec![];
 
-    for range in &ranges {
-        for n in range.to_range() {
-            current_values.push(Item(n));
-        }
+    for n in range.to_range() {
+        current_values.push(Item(n));
     }
 
     dbg!{current_values.len()};
