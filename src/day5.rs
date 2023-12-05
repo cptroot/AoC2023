@@ -37,6 +37,30 @@ impl ItemMap {
 
         *item
     }
+
+    fn map_ranges(&self, ranges: Vec<RangeType>) -> Vec<RangeType> {
+        let mut remaining_ranges = ranges;
+
+        let starting_length: usize = remaining_ranges.iter().map(|r| r.length).sum();
+
+        let mut output_ranges = Vec::new();
+
+        for map_range in &self.ranges {
+            remaining_ranges = remaining_ranges.into_iter().flat_map(|range| {
+                let (rem, out) = map_range.try_map_range(range);
+                output_ranges.extend(out);
+                rem
+            }).collect();
+
+            let remaining_length: usize = remaining_ranges.iter().map(|r| r.length).sum();
+            let output_length: usize = output_ranges.iter().map(|r| r.length).sum();
+            assert_eq!(starting_length, remaining_length + output_length);
+        }
+
+        output_ranges.extend(remaining_ranges.into_iter());
+
+        output_ranges
+    }
 }
 
 #[derive(Clone)]
@@ -55,13 +79,110 @@ impl MapRange {
             None
         }
     }
+
+    fn source_range(&self) -> RangeType {
+        RangeType {
+            start: self.source_start,
+            length: self.length,
+        }
+    }
+
+    fn try_map_range(&self, range: RangeType) -> (impl Iterator<Item = RangeType>, impl Iterator<Item = RangeType>) {
+        let contains_start = self.source_range().to_range().contains(&range.start);
+        let contains_end = self.source_range().to_range().contains(&(range.end() - 1));
+
+        match (contains_start, contains_end) {
+            (true, true) => {
+                // This range fully contains the source values, map the whole range
+                (vec![].into_iter(), vec![RangeType {
+                    start: range.start - self.source_start + self.dest_start,
+                    length: range.length,
+                }].into_iter())
+            },
+            (true, false) => {
+                // This range overlaps at the start
+                let first_untransformed = self.source_start + self.length;
+                // exclusive
+                let last_untransformed = range.end();
+                (
+                    vec![RangeType {
+                            start: first_untransformed,
+                            length: last_untransformed - first_untransformed,
+                    }].into_iter(),
+                    vec![RangeType {
+                            start: range.start - self.source_start + self.dest_start,
+                            length: first_untransformed - range.start,
+                    }].into_iter()
+                )
+            },
+            (false, true) => {
+                // This range overlaps at the end
+                let first_transformed = self.source_start;
+                // exclusive
+                let last_transformed = range.start + range.length;
+                (
+                    vec![RangeType {
+                            start: range.start,
+                            length: first_transformed - range.start,
+                    }].into_iter(),
+                    vec![RangeType {
+                            start: first_transformed - self.source_start + self.dest_start,
+                            length: last_transformed - first_transformed,
+                    }].into_iter(),
+                )
+            },
+            (false, false) => {
+                // either we're inside the start range or we're not
+                if self.source_start > range.start && self.source_range().end() < range.end() {
+                    // Contained by the input slice :<, two untranslated halves
+                    let first_transformed = self.source_start;
+                    // exclusive
+                    let last_transformed = self.source_range().end();
+
+                    (
+                        vec![
+                            RangeType {
+                                start: range.start,
+                                length: first_transformed - range.start,
+                            },
+                            RangeType {
+                                start: last_transformed,
+                                length: range.end() - last_transformed,
+                            }
+                        ].into_iter(),
+                        vec![RangeType {
+                                start: first_transformed - self.source_start + self.dest_start,
+                                length: last_transformed - first_transformed,
+                        }].into_iter()
+                    )
+                } else {
+                    // No overlap
+                    (
+                        vec![range].into_iter(),
+                        vec![].into_iter()
+                    )
+                }
+
+            },
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
 #[derive(Debug)]
+#[derive(PartialEq, Eq)]
 struct RangeType {
     start: usize,
     length: usize,
+}
+
+impl RangeType {
+    fn to_range(&self) -> std::ops::Range<usize> {
+        self.start..self.end()
+    }
+    fn end(&self) -> usize {
+        self.start + self.length
+    }
 }
 
 #[derive(Clone)]
@@ -86,8 +207,6 @@ use nom::combinator::opt;
 use nom::combinator::map;
 use nom::multi::separated_list1;
 use nom::bytes::complete::tag;
-use nom::branch::alt;
-use nom::sequence::separated_pair;
 
 fn parse_almanac(input: &str) -> IResult<&str, Data> {
     let (input, _) = opt(tag("\n"))(input)?;
@@ -188,14 +307,46 @@ fn find_mapped_value(data: &Data, start_type: &ItemType, end_type: &ItemType, va
 
 #[aoc(day5, part2)]
 fn solve_part2(input: &Data) -> usize {
-    let pairs: Vec<_> = input.seeds
+    let ranges: Vec<_> = input.seeds
         .chunks(2)
-        .map(|[start, length]| RangeType { start, length })
+        .map(|arr| RangeType { start: arr[0].0, length: arr[1].0 })
         .collect();
+
+    let start_type = &input.starting_type;
+    let end_type = &ItemType("location".to_owned());
+
+    let final_ranges = find_mapped_ranges(input, start_type, end_type, ranges);
+
+    let minimum_location = final_ranges.iter()
+        .map(|range| range.start)
+        .min()
+        .unwrap();
+
+    minimum_location
+}
+
+fn find_mapped_ranges(data: &Data, start_type: &ItemType, end_type: &ItemType, ranges: Vec<RangeType>) -> Vec<RangeType> {
+    let mut current_type = start_type;
+    let mut current_ranges = ranges;
+
+    while current_type != end_type {
+        dbg!{current_type};
+        let map = &data.maps[current_type];
+        let next_ranges = map.map_ranges(current_ranges);
+        let next_type = &map.result_type;
+
+        current_type = next_type;
+        current_ranges = next_ranges;
+    }
+
+    current_ranges
 }
 
 #[cfg(test)]
 mod test {
+    use super::RangeType;
+    use super::MapRange;
+
     const TEST_INPUT: &'static str =
 r#"
 seeds: 79 14 55 13
@@ -246,7 +397,53 @@ humidity-to-location map:
         let input = super::input_generator(TEST_INPUT).unwrap();
         let result = super::solve_part2(&input);
 
-        //assert_eq!(result, None);
-        assert!(false);
+        assert_eq!(result, 46);
+    }
+
+    fn run_test(map_range: &MapRange, range: RangeType) -> (Vec<RangeType>, Vec<RangeType>) {
+        let (a, b) = map_range.try_map_range(range);
+
+        (a.collect(), b.collect())
+    }
+    
+    #[test]
+    fn test_map_range() {
+        let map_range = MapRange {
+            source_start: 20,
+            dest_start: 40,
+            length: 20,
+        };
+
+        let range = RangeType {
+            start: 10,
+            length: 0,
+        };
+        let (remaining, output) = run_test(&map_range, range);
+        assert_eq!(remaining, vec![range]);
+        assert_eq!(output, vec![]);
+
+        let range = RangeType {
+            start: 40,
+            length: 10,
+        };
+        let (remaining, output) = run_test(&map_range, range);
+        assert_eq!(remaining, vec![range]);
+        assert_eq!(output, vec![]);
+
+        let range = RangeType {
+            start: 10,
+            length: 40,
+        };
+        let (remaining, output) = run_test(&map_range, range);
+        assert_eq!(remaining, vec![RangeType { start: 10, length: 10}, RangeType { start: 40, length: 10 }]);
+        assert_eq!(output, vec![RangeType { start: 40, length: 20}]);
+
+        let range = RangeType {
+            start: 20,
+            length: 10,
+        };
+        let (remaining, output) = run_test(&map_range, range);
+        assert_eq!(remaining, vec![]);
+        assert_eq!(output, vec![RangeType { start: 40, length: 10}]);
     }
 }
