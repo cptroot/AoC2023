@@ -342,6 +342,48 @@ fn find_mapped_ranges(data: &Data, start_type: &ItemType, end_type: &ItemType, r
     current_ranges
 }
 
+#[aoc(day5, part2, memory_hog)]
+fn solve_part2_slow(input: &Data) -> usize {
+    let ranges: Vec<_> = input.seeds
+        .chunks(2)
+        .map(|arr| RangeType { start: arr[0].0, length: arr[1].0 })
+        .collect();
+
+    let start_type = &input.starting_type;
+    let end_type = &ItemType("location".to_owned());
+
+    let final_values = find_mapped_brute_force(input, start_type, end_type, ranges);
+
+    final_values.into_iter().map(|i| i.0).min().unwrap()
+}
+
+fn find_mapped_brute_force(data: &Data, start_type: &ItemType, end_type: &ItemType, ranges: Vec<RangeType>) -> Vec<Item> {
+    let mut current_type = start_type;
+    let mut current_values = vec![];
+
+    for range in &ranges {
+        for n in range.to_range() {
+            current_values.push(Item(n));
+        }
+    }
+
+    dbg!{current_values.len()};
+
+    while current_type != end_type {
+        let map = &data.maps[current_type];
+        for current_value in &mut current_values {
+            *current_value = map.map_value(&current_value);
+
+        }
+        let next_type = &map.result_type;
+
+        current_type = next_type;
+    }
+
+    current_values
+}
+
+
 #[cfg(test)]
 mod test {
     use super::RangeType;
