@@ -88,7 +88,6 @@ Distance:  9  40  200
         let input = super::input_generator(TEST_INPUT).unwrap();
         let result = super::solve_part2(&input);
 
-        //assert_eq!(result, None);
-        assert!(false);
+        assert_eq!(result, 71503);
     }
 }
