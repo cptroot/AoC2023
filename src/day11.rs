@@ -44,47 +44,8 @@ fn input_generator(input: &str) -> Result<Data> {
 }
 
 #[aoc(day11, part1)]
-fn solve_part1((galaxies, array): &Data) -> usize {
-    let skiprows: Vec<_> = array.columns().into_iter()
-        .enumerate()
-        .filter(|(_, col)| {
-            col.fold(true, |a, &b| a && !b)
-        })
-        .map(|(i, _)| i)
-        .collect();
-    let skipcols: Vec<_> = array.rows().into_iter()
-        .enumerate()
-        .filter(|(_, row)| {
-            row.fold(true, |a, &b| a && !b)
-        })
-        .map(|(i, _)| i)
-        .collect();
-
-    let modified_galaxies: Vec<_> = galaxies.iter()
-        .map(|(i, j)| {
-            let skipped_columns = skipcols.iter()
-                .filter(|&n| n < i)
-                .count();
-            let skipped_rows = skiprows.iter()
-                .filter(|&n| n < j)
-                .count();
-
-            let i = i + skipped_columns;
-            let j = j + skipped_rows;
-
-            (i, j)
-        })
-        .collect();
-
-    let mut distance = 0;
-
-    for (index, a) in modified_galaxies.iter().enumerate() {
-        for b in modified_galaxies[index + 1..].iter() {
-            distance += manhattan_distance(a, b);
-        }
-    }
-
-    distance
+fn solve_part1(input: &Data) -> usize {
+    solve_multiplied_expansion(input, 2)
 }
 
 fn manhattan_distance(a: &(usize, usize), b: &(usize, usize)) -> usize {
