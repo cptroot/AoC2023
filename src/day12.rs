@@ -108,8 +108,6 @@ fn group_fits(n: usize, row: &[SpringCondition]) -> bool {
 
 #[aoc(day12, part2)]
 fn solve_part2(input: &[Data]) -> usize {
-    let mut total = 0;
-    for (i, record) in
     input.iter()
         .map(|record| {
             let mut row = Vec::with_capacity(record.row.len() * 5);
@@ -126,15 +124,9 @@ fn solve_part2(input: &[Data]) -> usize {
                 row,
                 groups,
             }
-        }).enumerate() {
-        //.map(|record| possible_arrangements(&record.row, &record.groups))
-
-        let mut subproblems = HashMap::new();
-        total += possible_arrangements_memoized(&record.row, &record.groups, &mut subproblems);
-        if i % 10 == 0 { dbg!{total}; }
-    }
-        //.sum()
-    total
+        })
+        .map(|record| possible_arrangements_memoized(&record.row, &record.groups, &mut HashMap::new()))
+        .sum()
 }
 
 fn possible_arrangements_memoized<'a>(row: &'a[SpringCondition], groups: &'a[usize], subproblems: & mut HashMap<(&'a [SpringCondition], &'a [usize]), usize>) -> usize {
