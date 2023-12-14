@@ -10,8 +10,6 @@ use ndarray::ArrayViewMut1;
 use ndarray::ShapeBuilder;
 
 use std::collections::VecDeque;
-#[cfg(test)]
-use std::io::stdout;
 
 type Input = Data;
 type InputRef = Data;
@@ -180,13 +178,11 @@ fn solve_part2(input: &InputRef) -> usize {
 
                     for dish in previous_dish_queue.iter().take(cycle_length).rev() {
                         pretty_print(dish);
-                        use std::io::Write;
-                        writeln!(stdout(), "{}", north_load(&dish)).unwrap();
+                        println!("{}", north_load(&dish));
                     }
 
                     pretty_print(&dish);
-                    use std::io::Write;
-                    writeln!(stdout(), "{}", north_load(&dish)).unwrap();
+                    println!("{}", north_load(&dish));
 
                     dbg!{north_load(&dish)};
                 }
@@ -201,10 +197,7 @@ fn solve_part2(input: &InputRef) -> usize {
 
 #[cfg(test)]
 fn pretty_print(dish: &Dish) {
-    let mut stdout = stdout().lock();
-
     for row in dish.rows() {
-        use std::io::Write;
         for c in row.iter() {
             use Space::*;
             let c = match c {
@@ -212,9 +205,9 @@ fn pretty_print(dish: &Dish) {
                 Cube => '#',
                 Empty => '.',
             };
-            write!(stdout, "{}", c).unwrap();
+            print!("{}", c);
         }
-        writeln!(stdout, "").unwrap();
+        println!();
     }
 }
 
