@@ -12,14 +12,15 @@ type Data = usize;
 #[aoc_generator(dayX)]
 fn input_generator(input: &str) -> Result<Input> {
     unimplemented!();
-    let (input, result) = parse_input(input).map_err(|err| err.to_owned())?;
+    let (input, result) = parse_input(input)
+        .map_err(|err| err.map(|err| anyhow!(nom::error::convert_error(input, err))))?;
     if !input.is_empty() {
         return Err(anyhow!("Had unparsed input after parsing: {}", input));
     }
     Ok(result)
 }
 
-use nom::IResult;
+type IResult<I, T> = nom::IResult<I, T, nom::error::VerboseError<I>>;
 use nom::bytes::complete::take_while1;
 use nom::combinator::opt;
 use nom::multi::separated_list1;
