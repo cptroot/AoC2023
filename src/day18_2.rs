@@ -192,7 +192,7 @@ fn solve_part2(input: &InputRef) -> i64 {
     let mut boundary_js = HashSet::new();
 
     let boundary_positions: Vec<_> = path.windows(2).chain(once([*path.last().unwrap(), *path.first().unwrap()].as_slice()))
-        .flat_map(|pair| {
+        .map(|pair| {
             let boundary_pos = pair[0].0;
             let i = boundary_pos.i;
             let j = boundary_pos.j;
@@ -201,21 +201,19 @@ fn solve_part2(input: &InputRef) -> i64 {
             boundary_js.insert(j);
 
             use Direction::*;
-            let slice = match (pair[0].1, pair[1].1) {
-                (Up, Right) => [(-1, 0, Up), (-1, -1, Up), (0, -1, Right)].iter(),
-                (Up, Left) => [(-1, 1, Up)].iter(),
-                (Right, Down) => [(1, -1, Right), (1, 0, Down)].iter(),
-                (Right, Up) => [(-1, -1, Right)].iter(),
-                (Down, Left) => [(1, 1, Down)].iter(),
-                (Down, Right) => [(1, -1, Down)].iter(),
-                (Left, Up) => [(0, 1, Left), (-1, 1, Left)].iter(),
-                (Left, Down) => [(1, 1, Left)].iter(),
+            let (i_diff, j_diff, direction) = match (pair[0].1, pair[1].1) {
+                (Up, Right) => (-1, -1, Up),
+                (Up, Left) => (-1, 1, Up),
+                (Right, Down) => (1, -1, Right),
+                (Right, Up) => (-1, -1, Right),
+                (Down, Left) => (1, 1, Down),
+                (Down, Right) => (1, -1, Down),
+                (Left, Up) => (-1, 1, Left),
+                (Left, Down) => (1, 1, Left),
                 _ => unreachable!(),
             };
 
-            slice.map(move |&(i_diff, j_diff, direction)|
-                (Pos { i: i + i_diff, j: j + j_diff }, direction)
-            )
+            (Pos { i: i + i_diff, j: j + j_diff }, direction)
         })
         .collect();
 
