@@ -5,7 +5,7 @@ use anyhow::Result;
 use anyhow::anyhow;
 
 type Input = Vec<Data>;
-type InputRef = &[Data];
+type InputRef = [Data];
 type Data = usize;
 
 
@@ -47,12 +47,12 @@ fn is_number(c: char) -> bool {
 }
 
 #[aoc(dayX, part1)]
-fn solve_part1(input: InputRef) -> usize {
+fn solve_part1(input: &InputRef) -> usize {
     unimplemented!()
 }
 
 #[aoc(dayX, part2)]
-fn solve_part2(input: InputRef) -> usize {
+fn solve_part2(input: &InputRef) -> usize {
     unimplemented!()
 }
 
