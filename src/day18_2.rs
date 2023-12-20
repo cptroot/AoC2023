@@ -33,23 +33,6 @@ const DIRECTIONS: [Direction; 4] = [
     Direction::Left,
 ];
 
-impl Direction {
-    fn hand(self, right_hand: bool) -> Direction {
-        use Direction::*;
-        match (self, right_hand) {
-            (Up, true) |
-            (Down, false) => Right,
-            (Right, true) |
-            (Left, false) => Down,
-            (Down, true) |
-            (Up, false) => Left,
-            (Left, true) |
-            (Right, false) => Up,
-        }
-    }
-}
-
-
 #[aoc_generator(day18, part2)]
 fn input_generator(input: &str) -> Result<Input> {
     let (input, result) = parse_input(input)
@@ -217,8 +200,8 @@ fn solve_part2(input: &InputRef) -> i64 {
         })
         .collect();
 
-    boundary_is.extend(boundary_positions.iter().map(|(p, d)| p.i));
-    boundary_js.extend(boundary_positions.iter().map(|(p, d)| p.j));
+    boundary_is.extend(boundary_positions.iter().map(|(p, _d)| p.i));
+    boundary_js.extend(boundary_positions.iter().map(|(p, _d)| p.j));
 
     let boundary_is: Vec<_> = {
         let mut tmp: Vec<_> = boundary_is.into_iter().collect();
@@ -243,10 +226,10 @@ fn solve_part2(input: &InputRef) -> i64 {
             (0..).map(|n| {
                 (pair[0].0.shift_multiple(pair[1].1, n), pair[1].1)
             })
-            .take_while(|&(p, d)| p != pair[1].0)
+            .take_while(|&(p, _d)| p != pair[1].0)
         })
         .collect();
-    let boundary: HashSet<_> = boundary_vec.iter().map(|&(p, d)| p).collect();
+    let boundary: HashSet<_> = boundary_vec.iter().map(|&(p, _d)| p).collect();
 
     let mut interior: HashSet<_> = HashSet::new();
 

@@ -13,6 +13,7 @@ type Data = Dig;
 struct Dig {
     direction: Direction,
     length: usize,
+    #[allow(dead_code)]
     color: Color,
 }
 
@@ -48,6 +49,7 @@ impl Direction {
     }
 }
 
+#[allow(dead_code)]
 struct Color {
     r: u8,
     g: u8,
