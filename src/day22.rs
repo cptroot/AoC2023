@@ -36,8 +36,6 @@ use nom::bytes::complete::take_while1;
 use nom::combinator::opt;
 use nom::multi::separated_list1;
 use nom::bytes::complete::tag;
-use nom::branch::alt;
-use nom::sequence::separated_pair;
 use nom::sequence::tuple;
 
 fn parse_input(input: &str) -> IResult<&str, Input> {

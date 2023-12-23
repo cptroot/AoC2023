@@ -220,8 +220,6 @@ fn solve_part2_inner(input: &InputRef, maximum_steps: usize) -> usize {
     assert_eq!(start.j, side_length / 2);
     let array = &input.1;
     // Split it into cases
-    let mut reachable_points = 0;
-
     // Center
     let center = solve_part1_inner_iterated(input.0, &input.1, maximum_steps).1;
 
